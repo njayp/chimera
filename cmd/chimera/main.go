@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "config.yaml", "path to configuration file")
+	configPath := flag.String("config", "config.json", "path to configuration file")
 	flag.Parse()
 
 	// Load configuration from file
@@ -44,7 +44,7 @@ func main() {
 	log.Printf("Starting aggregating MCP HTTP server on %s", cfg.Address)
 	log.Printf("Aggregating %d server(s)", len(cfg.MCPServers))
 	for name, srv := range cfg.MCPServers {
-		log.Printf("  - %s: %s", name, srv.Binary)
+		log.Printf("  - %s: %s", name, srv.Command)
 	}
 
 	if err := http.ListenAndServe(cfg.Address, handler); err != nil {

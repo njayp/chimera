@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"sync"
@@ -47,7 +48,7 @@ func (s *Server) ConnectToStdioServers(ctx context.Context, configs map[string]C
 	defer s.mu.Unlock()
 
 	for name, config := range configs {
-		cmd := exec.Command(config.Binary, config.Args...)
+		cmd := exec.Command(config.Command, config.Args...)
 		// Inherit environment variables from parent process
 		cmd.Env = os.Environ()
 		// Append any server-specific environment variables
@@ -76,17 +77,17 @@ func (s *Server) ConnectToStdioServers(ctx context.Context, configs map[string]C
 
 		// Fetch and register all tools from this server
 		if err := s.syncTools(ctx, conn); err != nil {
-			return fmt.Errorf("failed to sync tools from %s: %w", name, err)
+			slog.Error(fmt.Errorf("failed to sync tools from %s: %w", name, err).Error())
 		}
 
 		// Fetch and register all resources from this server
 		if err := s.syncResources(ctx, conn); err != nil {
-			return fmt.Errorf("failed to sync resources from %s: %w", name, err)
+			slog.Error(fmt.Errorf("failed to sync resources from %s: %w", name, err).Error())
 		}
 
 		// Fetch and register all prompts from this server
 		if err := s.syncPrompts(ctx, conn); err != nil {
-			return fmt.Errorf("failed to sync prompts from %s: %w", name, err)
+			slog.Error(fmt.Errorf("failed to sync prompts from %s: %w", name, err).Error())
 		}
 	}
 

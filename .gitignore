@@ -33,6 +33,6 @@ config.json
 
 # Editor/IDE
 # .idea/
-# .vscode/
+.vscode/
 
 bin/
