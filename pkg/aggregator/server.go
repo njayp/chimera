@@ -3,12 +3,10 @@ package aggregator
 import (
 	"context"
 	"fmt"
-	"log"
 	"log/slog"
 	"os"
 	"os/exec"
 	"strings"
-	"sync"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -17,7 +15,6 @@ import (
 type Server struct {
 	server  *mcp.Server
 	clients []*clientConnection
-	mu      sync.RWMutex
 }
 
 type clientConnection struct {
@@ -45,9 +42,6 @@ func New() *Server {
 // ConnectToStdioServers establishes connections to all configured stdio servers
 // and syncs their capabilities (tools, resources, prompts).
 func (s *Server) ConnectToStdioServers(ctx context.Context, configs map[string]Config) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
 	for name, config := range configs {
 		cmd := exec.Command(config.Command, config.Args...)
 		// Inherit environment variables from parent process
@@ -98,19 +92,6 @@ func (s *Server) ConnectToStdioServers(ctx context.Context, configs map[string]C
 // MCPServer returns the underlying mcp.Server instance.
 func (s *Server) MCPServer() *mcp.Server {
 	return s.server
-}
-
-// Close closes all client connections.
-func (s *Server) Close() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	for _, conn := range s.clients {
-		if err := conn.session.Close(); err != nil {
-			log.Printf("Error closing session for %s: %v", conn.name, err)
-		}
-	}
-	return nil
 }
 
 func (s *Server) syncTools(ctx context.Context, conn *clientConnection) error {

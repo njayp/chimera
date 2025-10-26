@@ -2,7 +2,6 @@
 package main
 
 import (
-	"context"
 	"flag"
 	"log"
 	"net/http"
@@ -25,14 +24,12 @@ func main() {
 		log.Fatal("No servers configured")
 	}
 
-	ctx := context.Background()
-
 	// Create HTTP handler that creates a new aggregating server per session
-	handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
+	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		agg := aggregator.New()
 
 		// Connect to all stdio servers for this HTTP session
-		if err := agg.ConnectToStdioServers(ctx, cfg.MCPServers); err != nil {
+		if err := agg.ConnectToStdioServers(req.Context(), cfg.MCPServers); err != nil {
 			log.Printf("Failed to connect to stdio servers: %v", err)
 			return nil
 		}
