@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"strings"
 	"sync"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -120,11 +121,13 @@ func (s *Server) syncTools(ctx context.Context, conn *clientConnection) error {
 
 		// Prefix tool name with server name to avoid conflicts
 		prefixedTool := *tool
-		prefixedTool.Name = conn.name + "." + tool.Name
+		if !strings.HasPrefix(tool.Name, conn.name) {
+			prefixedTool.Name = conn.name + "." + tool.Name
+		}
 
 		// Add tool to our aggregating server
 		s.server.AddTool(&prefixedTool, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			return s.routeToolCall(ctx, req, conn)
+			return s.routeToolCall(ctx, req, conn, tool.Name)
 		})
 	}
 	return nil
@@ -138,10 +141,12 @@ func (s *Server) syncResources(ctx context.Context, conn *clientConnection) erro
 
 		// Create a prefixed URI to avoid conflicts
 		prefixedResource := *resource
-		prefixedResource.URI = conn.name + "://" + resource.URI
+		if !strings.HasPrefix(resource.URI, conn.name) {
+			prefixedResource.URI = conn.name + "://" + resource.URI
+		}
 
 		s.server.AddResource(&prefixedResource, func(ctx context.Context, req *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
-			return s.routeResourceRead(ctx, req, conn)
+			return s.routeResourceRead(ctx, req, conn, resource.URI)
 		})
 	}
 	return nil
@@ -154,43 +159,37 @@ func (s *Server) syncPrompts(ctx context.Context, conn *clientConnection) error 
 		}
 
 		prefixedPrompt := *prompt
-		prefixedPrompt.Name = conn.name + "." + prompt.Name
+		if !strings.HasPrefix(prompt.Name, conn.name) {
+			prefixedPrompt.Name = conn.name + "." + prompt.Name
+		}
 
 		s.server.AddPrompt(&prefixedPrompt, func(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
-			return s.routePromptGet(ctx, req, conn)
+			return s.routePromptGet(ctx, req, conn, prompt.Name)
 		})
 	}
 	return nil
 }
 
-func (s *Server) routeToolCall(ctx context.Context, req *mcp.CallToolRequest, conn *clientConnection) (*mcp.CallToolResult, error) {
-	// Remove the prefix to get the original tool name
-	originalName := req.Params.Name[len(conn.name)+1:]
-
+func (s *Server) routeToolCall(ctx context.Context, req *mcp.CallToolRequest, conn *clientConnection, toolName string) (*mcp.CallToolResult, error) {
 	params := &mcp.CallToolParams{
-		Name:      originalName,
+		Name:      toolName,
 		Arguments: req.Params.Arguments,
 	}
 
 	return conn.session.CallTool(ctx, params)
 }
 
-func (s *Server) routeResourceRead(ctx context.Context, req *mcp.ReadResourceRequest, conn *clientConnection) (*mcp.ReadResourceResult, error) {
-	// Remove the prefix to get the original URI
-	originalURI := req.Params.URI[len(conn.name)+3:] // +3 for "://"
-
+func (s *Server) routeResourceRead(ctx context.Context, _ *mcp.ReadResourceRequest, conn *clientConnection, uri string) (*mcp.ReadResourceResult, error) {
 	params := &mcp.ReadResourceParams{
-		URI: originalURI,
+		URI: uri,
 	}
 
 	return conn.session.ReadResource(ctx, params)
 }
 
-func (s *Server) routePromptGet(ctx context.Context, req *mcp.GetPromptRequest, conn *clientConnection) (*mcp.GetPromptResult, error) {
-	originalName := req.Params.Name[len(conn.name)+1:]
-
+func (s *Server) routePromptGet(ctx context.Context, req *mcp.GetPromptRequest, conn *clientConnection, name string) (*mcp.GetPromptResult, error) {
 	params := &mcp.GetPromptParams{
-		Name:      originalName,
+		Name:      name,
 		Arguments: req.Params.Arguments,
 	}
 
