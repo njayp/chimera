@@ -9,21 +9,22 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// ServerConfig holds the complete configuration for the aggregating server.
-type ServerConfig struct {
-	Address    string                 `json:"address" yaml:"address"`       // HTTP server address (e.g., ":8080")
-	MCPServers map[string]StdioConfig `json:"mcpServers" yaml:"mcpServers"` // List of stdio servers to aggregate
+// Config holds the complete configuration for the aggregating server.
+type Config struct {
+	Address      string                 `json:"address" yaml:"address"` // HTTP server address (e.g., ":8080")
+	StdioServers map[string]StdioConfig `json:"stdioServers" yaml:"stdioServers"`
+	HTTPServers  map[string]HTTPConfig  `json:"httpServers" yaml:"httpServers"`
 }
 
 // LoadConfig loads configuration from a file. Supports JSON and YAML formats
 // based on file extension.
-func LoadConfig(path string) (*ServerConfig, error) {
+func LoadConfig(path string) (*Config, error) {
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	var cfg ServerConfig
+	var cfg Config
 
 	// Determine format by file extension
 	ext := filepath.Ext(path)

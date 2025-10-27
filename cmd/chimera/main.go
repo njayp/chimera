@@ -20,17 +20,19 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	if len(cfg.MCPServers) == 0 {
-		log.Fatal("No servers configured")
-	}
-
 	// Create HTTP handler that creates a new aggregating server per session
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		agg := aggregator.New()
 
-		// Connect to all stdio servers for this HTTP session
-		if err := agg.ConnectToStdioServers(req.Context(), cfg.MCPServers); err != nil {
+		// Connect to all stdio servers
+		if err := agg.ConnectToStdioServers(req.Context(), cfg.StdioServers); err != nil {
 			log.Printf("Failed to connect to stdio servers: %v", err)
+			return nil
+		}
+
+		// Connect to all HTTP servers
+		if err := agg.ConnectToHTTPServers(req.Context(), cfg.HTTPServers); err != nil {
+			log.Printf("Failed to connect to HTTP servers: %v", err)
 			return nil
 		}
 
@@ -39,11 +41,6 @@ func main() {
 
 	// Start HTTP server
 	log.Printf("Starting aggregating MCP HTTP server on %s", cfg.Address)
-	log.Printf("Aggregating %d server(s)", len(cfg.MCPServers))
-	for name, srv := range cfg.MCPServers {
-		log.Printf("  - %s: %s", name, srv.Command)
-	}
-
 	if err := http.ListenAndServe(cfg.Address, handler); err != nil {
 		log.Fatal(err)
 	}

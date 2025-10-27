@@ -8,6 +8,7 @@ import (
 type Server struct {
 	server       *mcp.Server
 	stdioClients []*stdioConnection
+	httpClients  []*httpConnection
 }
 
 // New creates a new aggregating server.
@@ -22,6 +23,7 @@ func New() *Server {
 	return &Server{
 		server:       mcpServer,
 		stdioClients: make([]*stdioConnection, 0),
+		httpClients:  make([]*httpConnection, 0),
 	}
 }
 
