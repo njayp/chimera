@@ -11,8 +11,8 @@ import (
 
 // ServerConfig holds the complete configuration for the aggregating server.
 type ServerConfig struct {
-	Address    string            `json:"address" yaml:"address"`       // HTTP server address (e.g., ":8080")
-	MCPServers map[string]Config `json:"mcpServers" yaml:"mcpServers"` // List of stdio servers to aggregate
+	Address    string                 `json:"address" yaml:"address"`       // HTTP server address (e.g., ":8080")
+	MCPServers map[string]StdioConfig `json:"mcpServers" yaml:"mcpServers"` // List of stdio servers to aggregate
 }
 
 // LoadConfig loads configuration from a file. Supports JSON and YAML formats
