@@ -22,7 +22,7 @@ type stdioConnection struct {
 // and syncs their capabilities (tools, resources, prompts).
 func (s *Server) ConnectToStdioServers(ctx context.Context, configs map[string]StdioConfig) error {
 	for name, config := range configs {
-		cmd := exec.Command(config.Command, config.Args...)
+		cmd := exec.CommandContext(ctx, config.Command, config.Args...)
 		// Inherit environment variables from parent process
 		cmd.Env = os.Environ()
 		// Append any server-specific environment variables

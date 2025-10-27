@@ -26,13 +26,15 @@ chimera/
 
 ### Package: `pkg/aggregator`
 
-The `aggregator` package provides the core functionality for aggregating multiple stdio MCP servers:
+The `aggregator` package provides the core functionality for aggregating multiple MCP servers (both stdio and HTTP):
 
-- **`Config`**: Configuration for individual stdio MCP servers (binary path, args, env vars)
-- **`ServerConfig`**: Top-level configuration including HTTP address and list of servers
+- **`StdioConfig`**: Configuration for stdio MCP servers (command path, args, env vars)
+- **`HTTPConfig`**: Configuration for HTTP MCP servers (URL)
+- **`Config`**: Top-level configuration including HTTP address and server maps
 - **`LoadConfig`**: Loads configuration from YAML or JSON files
-- **`Server`**: The aggregating server that manages multiple stdio server connections
+- **`Server`**: The aggregating server that manages multiple server connections
   - Connects to stdio servers via `exec.Command`
+  - Connects to HTTP servers via HTTP transport
   - Syncs capabilities (tools, resources, prompts) from each server
   - Prefixes names/URIs to avoid conflicts between servers
   - Routes requests to the appropriate upstream server
@@ -49,53 +51,60 @@ The main application entry point that:
 
 ### Configuration
 
-Create a configuration file (YAML or JSON) to define your stdio MCP servers:
+Create a configuration file (YAML or JSON) to define your MCP servers:
 
 **config.yaml:**
 ```yaml
 address: ":8080"
-servers:
-  - name: filesystem
-    binary: ./filesystem-server
+stdioServers:
+  filesystem:
+    command: ./filesystem-server
     args: []
     env: []
   
-  - name: weather
-    binary: ./weather-server
+  weather:
+    command: ./weather-server
     args: []
     env:
       - WEATHER_API_KEY=your_api_key_here
       - WEATHER_PROVIDER=openweather
   
-  - name: database
-    binary: /usr/local/bin/db-mcp-server
+  database:
+    command: /usr/local/bin/db-mcp-server
     args: []
     env:
       - DATABASE_URL=postgresql://localhost/mydb
       - DB_POOL_SIZE=10
+
+httpServers:
+  remote-api:
+    url: http://example.com:9000/mcp
 ```
 
 **config.json:**
 ```json
 {
   "address": ":8080",
-  "servers": [
-    {
-      "name": "filesystem",
-      "binary": "./filesystem-server",
+  "stdioServers": {
+    "filesystem": {
+      "command": "./filesystem-server",
       "args": [],
       "env": []
     },
-    {
-      "name": "weather",
-      "binary": "./weather-server",
+    "weather": {
+      "command": "./weather-server",
       "args": [],
       "env": [
         "WEATHER_API_KEY=your_api_key_here",
         "WEATHER_PROVIDER=openweather"
       ]
     }
-  ]
+  },
+  "httpServers": {
+    "remote-api": {
+      "url": "http://example.com:9000/mcp"
+    }
+  }
 }
 ```
 
@@ -119,11 +128,12 @@ The server will start on the address specified in your config file (default `:80
 ### Configuration Fields
 
 - **`address`**: HTTP server listen address (e.g., `:8080`, `localhost:3000`)
-- **`servers`**: Array of stdio MCP server configurations
-  - **`name`**: Unique identifier for the server (used as prefix for tools/resources/prompts)
-  - **`binary`**: Path to the stdio MCP server executable
+- **`stdioServers`**: Map of stdio MCP server configurations (key is the server name)
+  - **`command`**: Path to the stdio MCP server executable
   - **`args`**: Command-line arguments to pass to the server
   - **`env`**: Additional environment variables (appended to inherited parent env)
+- **`httpServers`**: Map of HTTP MCP server configurations (key is the server name)
+  - **`url`**: Base URL of the HTTP MCP server
 
 ### Environment Variables
 
