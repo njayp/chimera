@@ -19,7 +19,7 @@ type proxy struct {
 // proxyServer establishes a connection to a backend MCP server
 // and syncs its capabilities (tools, resources, prompts).
 func (s *proxy) proxyServer(ctx context.Context, client client, name string) {
-	// Establish connection to the stdio server
+	// Establish connection to the server
 	session, err := client.connect(ctx)
 	if err != nil {
 		slog.Error("failed to connect to server", "name", name, "err", err)
@@ -61,9 +61,10 @@ func (s *proxy) proxyTools(ctx context.Context, session *mcp.ClientSession, name
 
 		// Add tool to our aggregating server
 		s.server.AddTool(&prefixedTool, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-			return s.routeToolCall(ctx, req, session, name)
+			return s.routeToolCall(ctx, req, session, tool.Name)
 		})
 	}
+
 	return nil
 }
 
@@ -83,6 +84,7 @@ func (s *proxy) proxyResources(ctx context.Context, session *mcp.ClientSession, 
 			return s.routeResourceRead(ctx, req, session, resource.URI)
 		})
 	}
+
 	return nil
 }
 
@@ -101,6 +103,7 @@ func (s *proxy) proxyPrompts(ctx context.Context, session *mcp.ClientSession, na
 			return s.routePromptGet(ctx, req, session, prompt.Name)
 		})
 	}
+
 	return nil
 }
 

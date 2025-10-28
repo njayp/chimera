@@ -14,11 +14,11 @@ type Servers struct {
 }
 
 func Run(servers Servers, addr string) error {
-	agg := &manager{servers: servers}
+	m := &manager{servers: servers}
 
 	// Create HTTP handler that creates a new aggregating server per session
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
-		return agg.newProxy(req.Context())
+		return m.newProxy(req.Context())
 	}, nil)
 
 	// Start HTTP server

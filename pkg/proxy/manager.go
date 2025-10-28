@@ -22,12 +22,12 @@ func (s *manager) newProxy(ctx context.Context) *mcp.Server {
 		server: mcp.NewServer(impl, nil),
 	}
 
-	for n, s := range s.servers.StdioServers {
-		proxy.proxyServer(ctx, s, n)
+	for n, c := range s.servers.StdioServers {
+		proxy.proxyServer(ctx, c, n)
 	}
 
-	for n, s := range s.servers.HTTPServers {
-		proxy.proxyServer(ctx, s, n)
+	for n, c := range s.servers.HTTPServers {
+		proxy.proxyServer(ctx, c, n)
 	}
 
 	return proxy.server
