@@ -2,46 +2,53 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
-	"log"
-	"net/http"
+	"fmt"
+	"os"
+	"path/filepath"
 
-	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/njayp/chimera/pkg/aggregator"
+	"github.com/njayp/chimera/pkg/proxy"
+	"gopkg.in/yaml.v3"
 )
 
 func main() {
 	configPath := flag.String("config", "config.json", "path to configuration file")
 	flag.Parse()
 
-	// Load configuration from file
-	cfg, err := aggregator.LoadConfig(*configPath)
+	config, err := loadConfig(*configPath)
 	if err != nil {
-		log.Fatalf("Failed to load config: %v", err)
+		panic(fmt.Errorf("failed to load config: %w", err))
 	}
 
-	// Create HTTP handler that creates a new aggregating server per session
-	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
-		agg := aggregator.New()
+	panic((proxy.Run(config, ":8080")))
+}
 
-		// Connect to all stdio servers
-		if err := agg.ConnectToStdioServers(req.Context(), cfg.StdioServers); err != nil {
-			log.Printf("Failed to connect to stdio servers: %v", err)
-			return nil
-		}
+// loadConfig loads configuration from a file. Supports JSON and YAML formats
+// based on file extension.
+func loadConfig(path string) (proxy.Servers, error) {
+	var config proxy.Servers
 
-		// Connect to all HTTP servers
-		if err := agg.ConnectToHTTPServers(req.Context(), cfg.HTTPServers); err != nil {
-			log.Printf("Failed to connect to HTTP servers: %v", err)
-			return nil
-		}
-
-		return agg.MCPServer()
-	}, nil)
-
-	// Start HTTP server
-	log.Printf("Starting aggregating MCP HTTP server on %s", cfg.Address)
-	if err := http.ListenAndServe(cfg.Address, handler); err != nil {
-		log.Fatal(err)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return config, fmt.Errorf("failed to read config file: %w", err)
 	}
+
+	// Determine format by file extension
+	ext := filepath.Ext(path)
+	switch ext {
+	case ".json":
+		if err := json.Unmarshal(data, &config); err != nil {
+			return config, fmt.Errorf("failed to parse JSON config: %w", err)
+		}
+	case ".yaml", ".yml":
+		if err := yaml.Unmarshal(data, &config); err != nil {
+			return config, fmt.Errorf("failed to parse YAML config: %w", err)
+		}
+	default:
+		// Unsupported extension
+		return config, fmt.Errorf("extension not supported: %s", ext)
+	}
+
+	return config, nil
 }
