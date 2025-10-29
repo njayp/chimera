@@ -9,8 +9,8 @@ import (
 
 // HTTPClient represents the configuration for an HTTP MCP server.
 type HTTPClient struct {
-	URL     string            `json:"url" yaml:"url"`       // Base URL of the HTTP MCP server
-	Headers map[string]string `json:"header" yaml:"header"` // Optional headers to include in requests
+	URL     string
+	Headers map[string]string
 }
 
 func (c HTTPClient) connect(ctx context.Context) (*mcp.ClientSession, error) {

@@ -11,8 +11,8 @@ import (
 
 // Config represents the structure of VSCode's MCP configuration file.
 type Config struct {
-	Inputs  []Input              `json:"inputs,omitempty"`
-	Servers map[string]MCPServer `json:"servers"`
+	Inputs  []Input           `json:"inputs,omitempty"`
+	Servers map[string]Server `json:"servers"`
 }
 
 // Input represents a VSCode input variable configuration.
@@ -23,8 +23,8 @@ type Input struct {
 	Password    bool   `json:"password,omitempty"`
 }
 
-// MCPServer represents an MCP server configuration entry for VSCode.
-type MCPServer struct {
+// Server represents an MCP server configuration entry for VSCode.
+type Server struct {
 	Type    string            `json:"type,omitempty"`
 	Command string            `json:"command,omitempty"`
 	Args    []string          `json:"args,omitempty"`

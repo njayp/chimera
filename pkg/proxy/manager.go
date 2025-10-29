@@ -15,8 +15,8 @@ type manager struct {
 
 // Servers holds the complete configuration for the aggregating server.
 type Servers struct {
-	StdioServers map[string]StdioClient `json:"stdioServers" yaml:"stdioServers"`
-	HTTPServers  map[string]HTTPClient  `json:"httpServers" yaml:"httpServers"`
+	StdioServers map[string]StdioClient
+	HTTPServers  map[string]HTTPClient
 }
 
 // Run starts the aggregating MCP HTTP server on the specified address.
