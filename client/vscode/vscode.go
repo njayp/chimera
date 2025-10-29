@@ -27,18 +27,31 @@ type Server struct {
 
 // Clients loads MCP server configuration from a Clients-style JSON file.
 func Clients(path string) (proxy.Clients, error) {
-	clients := make(proxy.Clients)
+	config, err := readFile(path)
+	if err != nil {
+		return proxy.Clients{}, fmt.Errorf("failed to load MCP config: %w", err)
+	}
+
+	return clients(config), nil
+}
+
+func readFile(path string) (Config, error) {
+	var config Config
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return clients, fmt.Errorf("failed to read config file: %w", err)
+		return config, fmt.Errorf("failed to read config file: %w", err)
 	}
 
-	var config Config
 	if err := json.Unmarshal(data, &config); err != nil {
-		return clients, fmt.Errorf("failed to parse JSON config: %w", err)
+		return config, fmt.Errorf("failed to parse JSON config: %w", err)
 	}
 
+	return config, nil
+}
+
+func clients(config Config) proxy.Clients {
+	clients := make(proxy.Clients)
 	for name, server := range config.Servers {
 		switch server.Type {
 		case "stdio":
@@ -64,5 +77,5 @@ func Clients(path string) (proxy.Clients, error) {
 		}
 	}
 
-	return clients, nil
+	return clients
 }

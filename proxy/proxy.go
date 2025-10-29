@@ -51,6 +51,7 @@ func (p *proxy) proxyServer(ctx context.Context, client Client, name string) {
 func (p *proxy) proxyTools(ctx context.Context, session *mcp.ClientSession, name string) error {
 	for tool, err := range session.Tools(ctx, nil) {
 		if err != nil {
+			// iteration stops at first error
 			return err
 		}
 
@@ -77,13 +78,14 @@ func (p *proxy) proxyTools(ctx context.Context, session *mcp.ClientSession, name
 func (p *proxy) proxyResources(ctx context.Context, session *mcp.ClientSession, name string) error {
 	for resource, err := range session.Resources(ctx, nil) {
 		if err != nil {
+			// iteration stops at first error
 			return err
 		}
 
 		// Create a prefixed URI to avoid conflicts
 		prefixedResource := *resource
 		if !strings.HasPrefix(resource.URI, name) {
-			prefixedResource.URI = name + "://" + resource.URI
+			prefixedResource.URI = name + "." + resource.URI
 		}
 
 		p.server.AddResource(&prefixedResource, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
@@ -101,6 +103,7 @@ func (p *proxy) proxyResources(ctx context.Context, session *mcp.ClientSession, 
 func (p *proxy) proxyPrompts(ctx context.Context, session *mcp.ClientSession, name string) error {
 	for prompt, err := range session.Prompts(ctx, nil) {
 		if err != nil {
+			// iteration stops at first error
 			return err
 		}
 
