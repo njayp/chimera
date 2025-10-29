@@ -1,5 +1,4 @@
-// Package config provides configuration file loading and parsing.
-package config
+package vscode
 
 import (
 	"encoding/json"
@@ -26,8 +25,8 @@ type Server struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
-// VSCode loads MCP server configuration from a VSCode-style JSON file.
-func VSCode(path string) (proxy.Clients, error) {
+// Clients loads MCP server configuration from a Clients-style JSON file.
+func Clients(path string) (proxy.Clients, error) {
 	clients := make(proxy.Clients)
 
 	data, err := os.ReadFile(path)

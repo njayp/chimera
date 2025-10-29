@@ -20,14 +20,14 @@ func (c HTTP) Connect(ctx context.Context) (*mcp.ClientSession, error) {
 	}, nil)
 
 	transport := &mcp.StreamableClientTransport{
-		HTTPClient: c.httpClient(),
+		HTTPClient: c.client(),
 		Endpoint:   c.URL,
 	}
 
 	return client.Connect(ctx, transport, nil)
 }
 
-func (c HTTP) httpClient() *http.Client {
+func (c HTTP) client() *http.Client {
 	return &http.Client{
 		Transport: &CustomTransport{
 			Transport: http.DefaultTransport,

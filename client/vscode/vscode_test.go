@@ -1,4 +1,4 @@
-package config
+package vscode
 
 import (
 	"os"
@@ -30,7 +30,7 @@ func TestVSCode_ValidConfig(t *testing.T) {
 	tmpFile := createTempFile(t, content)
 	defer func() { _ = os.Remove(tmpFile) }()
 
-	servers, err := VSCode(tmpFile)
+	servers, err := Clients(tmpFile)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -46,14 +46,14 @@ func TestVSCode_InvalidJSON(t *testing.T) {
 	tmpFile := createTempFile(t, content)
 	defer func() { _ = os.Remove(tmpFile) }()
 
-	_, err := VSCode(tmpFile)
+	_, err := Clients(tmpFile)
 	if err == nil {
 		t.Fatal("expected error for invalid JSON, got nil")
 	}
 }
 
 func TestVSCode_FileNotFound(t *testing.T) {
-	_, err := VSCode("/nonexistent/file.json")
+	_, err := Clients("/nonexistent/file.json")
 	if err == nil {
 		t.Fatal("expected error for nonexistent file, got nil")
 	}
@@ -72,7 +72,7 @@ func TestVSCode_UnsupportedServerType(t *testing.T) {
 	tmpFile := createTempFile(t, content)
 	defer func() { _ = os.Remove(tmpFile) }()
 
-	servers, err := VSCode(tmpFile)
+	servers, err := Clients(tmpFile)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -103,7 +103,7 @@ func TestVSCode_WithInputs(t *testing.T) {
 	tmpFile := createTempFile(t, content)
 	defer func() { _ = os.Remove(tmpFile) }()
 
-	servers, err := VSCode(tmpFile)
+	servers, err := Clients(tmpFile)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}

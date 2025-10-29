@@ -45,7 +45,7 @@ func TestHTTPClient_HTTPClientWithHeaders(t *testing.T) {
 		},
 	}
 
-	httpClient := client.httpClient()
+	httpClient := client.client()
 	if httpClient == nil {
 		t.Fatal("expected http client, got nil")
 	}
