@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	configPath := flag.String("config", "config.json", "path to configuration file")
+	configPath := flag.String("config", ".vscode/mcp.json", "path to configuration file")
 	flag.Parse()
 
 	config, err := config.VSCode(*configPath)

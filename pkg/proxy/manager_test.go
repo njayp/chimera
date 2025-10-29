@@ -28,14 +28,11 @@ func TestManager_NewProxy_MultipleServers(t *testing.T) {
 	defer testServer2.Close()
 
 	m := &manager{
-		servers: Servers{
-			StdioServers: make(map[string]StdioClient),
-			HTTPServers: map[string]HTTPClient{
-				"server1": {URL: testServer1.URL},
-				"server2": {URL: testServer2.URL},
-			},
-		},
+		clients: make(Clients),
 	}
+
+	m.clients["server1"] = &HTTPClient{URL: testServer1.URL}
+	m.clients["server2"] = &HTTPClient{URL: testServer2.URL}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

@@ -4,6 +4,7 @@ package config
 import (
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"os"
 
 	"github.com/njayp/chimera/pkg/proxy"
@@ -11,16 +12,7 @@ import (
 
 // Config represents the structure of VSCode's MCP configuration file.
 type Config struct {
-	Inputs  []Input           `json:"inputs,omitempty"`
 	Servers map[string]Server `json:"servers"`
-}
-
-// Input represents a VSCode input variable configuration.
-type Input struct {
-	Type        string `json:"type"`
-	ID          string `json:"id"`
-	Description string `json:"description"`
-	Password    bool   `json:"password,omitempty"`
 }
 
 // Server represents an MCP server configuration entry for VSCode.
@@ -34,20 +26,17 @@ type Server struct {
 }
 
 // VSCode loads MCP server configuration from a VSCode-style JSON file.
-func VSCode(path string) (proxy.Servers, error) {
-	servers := proxy.Servers{
-		StdioServers: make(map[string]proxy.StdioClient),
-		HTTPServers:  make(map[string]proxy.HTTPClient),
-	}
+func VSCode(path string) (proxy.Clients, error) {
+	clients := make(proxy.Clients)
 
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return servers, fmt.Errorf("failed to read config file: %w", err)
+		return clients, fmt.Errorf("failed to read config file: %w", err)
 	}
 
 	var config Config
 	if err := json.Unmarshal(data, &config); err != nil {
-		return servers, fmt.Errorf("failed to parse JSON config: %w", err)
+		return clients, fmt.Errorf("failed to parse JSON config: %w", err)
 	}
 
 	for name, server := range config.Servers {
@@ -62,20 +51,18 @@ func VSCode(path string) (proxy.Servers, error) {
 				s.Env = append(s.Env, fmt.Sprintf("%s=%s", key, value))
 			}
 
-			servers.StdioServers[name] = s
-
+			clients[name] = s
 		case "http":
 			s := proxy.HTTPClient{
 				URL:     server.URL,
 				Headers: server.Headers,
 			}
 
-			servers.HTTPServers[name] = s
-
+			clients[name] = s
 		default:
-			return servers, fmt.Errorf("unsupported server type: %s", server.Type)
+			slog.Error("unsupported server type", "name", name, "type", server.Type)
 		}
 	}
 
-	return servers, nil
+	return clients, nil
 }

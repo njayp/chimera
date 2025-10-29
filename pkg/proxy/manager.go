@@ -8,20 +8,17 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
+// Clients is a map of named MCP clients.
+type Clients map[string]client
+
 // manager wraps multiple MCP servers and exposes them as one.
 type manager struct {
-	servers Servers
-}
-
-// Servers holds the complete configuration for the aggregating server.
-type Servers struct {
-	StdioServers map[string]StdioClient
-	HTTPServers  map[string]HTTPClient
+	clients Clients
 }
 
 // Run starts the aggregating MCP HTTP server on the specified address.
-func Run(servers Servers, addr string) error {
-	m := &manager{servers: servers}
+func Run(clients Clients, addr string) error {
+	m := &manager{clients: clients}
 
 	// Create HTTP handler that creates a new aggregating server per session
 	handler := mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
@@ -44,11 +41,7 @@ func (s *manager) newProxy(ctx context.Context) *mcp.Server {
 		server: mcp.NewServer(impl, nil),
 	}
 
-	for n, c := range s.servers.StdioServers {
-		proxy.proxyServer(ctx, c, n)
-	}
-
-	for n, c := range s.servers.HTTPServers {
+	for n, c := range s.clients {
 		proxy.proxyServer(ctx, c, n)
 	}
 
