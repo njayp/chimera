@@ -35,6 +35,7 @@ func (c HTTPClient) httpClient() *http.Client {
 	}
 }
 
+// CustomTransport wraps an HTTP transport to add custom headers to all requests.
 type CustomTransport struct {
 	Transport http.RoundTripper
 	Headers   map[string]string

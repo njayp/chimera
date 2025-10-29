@@ -1,3 +1,4 @@
+// Package config provides configuration file loading and parsing.
 package config
 
 import (
@@ -32,8 +33,12 @@ type MCPServer struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
+// VSCode loads MCP server configuration from a VSCode-style JSON file.
 func VSCode(path string) (proxy.Servers, error) {
-	var servers proxy.Servers
+	servers := proxy.Servers{
+		StdioServers: make(map[string]proxy.StdioClient),
+		HTTPServers:  make(map[string]proxy.HTTPClient),
+	}
 
 	data, err := os.ReadFile(path)
 	if err != nil {

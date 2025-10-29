@@ -19,6 +19,7 @@ type Servers struct {
 	HTTPServers  map[string]HTTPClient  `json:"httpServers" yaml:"httpServers"`
 }
 
+// Run starts the aggregating MCP HTTP server on the specified address.
 func Run(servers Servers, addr string) error {
 	m := &manager{servers: servers}
 

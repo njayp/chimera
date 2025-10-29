@@ -25,7 +25,7 @@ func (c StdioClient) connect(ctx context.Context) (*mcp.ClientSession, error) {
 	transport := &mcp.CommandTransport{Command: cmd}
 
 	client := mcp.NewClient(&mcp.Implementation{
-		Name: "aggregating-client",
+		Name: "chimera",
 	}, nil)
 
 	return client.Connect(ctx, transport, nil)
