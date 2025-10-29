@@ -3,6 +3,7 @@ package proxy
 import (
 	"context"
 	"net/http"
+	"sync"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
@@ -34,9 +35,16 @@ func (m *manager) newProxy(ctx context.Context) *mcp.Server {
 		}, nil),
 	}
 
+	// Connect to all backend servers async
+	wg := sync.WaitGroup{}
 	for n, c := range m.clients {
-		proxy.proxyServer(ctx, c, n)
+		wg.Add(1)
+		go func(n string, c Client) {
+			defer wg.Done()
+			proxy.proxyServer(ctx, c, n)
+		}(n, c)
 	}
+	wg.Wait()
 
 	return proxy.server
 }

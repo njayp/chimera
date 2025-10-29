@@ -28,7 +28,7 @@ func (p *proxy) proxyServer(ctx context.Context, client Client, name string) {
 		return
 	}
 
-	// Ensure session is closed when context is cancelled or when we're done
+	// Ensure session is closed when context is cancelled
 	go func() {
 		<-ctx.Done()
 		if err := session.Close(); err != nil {

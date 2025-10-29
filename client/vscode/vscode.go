@@ -25,7 +25,7 @@ type Server struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
-// Clients loads MCP server configuration from a Clients-style JSON file.
+// Clients loads MCP server configuration from a VSCode-style JSON file of mcp servers.
 func Clients(path string) (proxy.Clients, error) {
 	config, err := readFile(path)
 	if err != nil {
