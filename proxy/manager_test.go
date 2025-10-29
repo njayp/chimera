@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/njayp/chimera/pkg/client"
+	"github.com/njayp/chimera/client"
 )
 
 func TestManager_NewProxy_MultipleServers(t *testing.T) {

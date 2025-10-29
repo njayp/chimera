@@ -7,8 +7,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/njayp/chimera/pkg/client"
-	"github.com/njayp/chimera/pkg/proxy"
+	"github.com/njayp/chimera/client"
+	"github.com/njayp/chimera/proxy"
 )
 
 // Config represents the structure of VSCode's MCP configuration file.

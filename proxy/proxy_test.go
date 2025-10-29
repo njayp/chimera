@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
-	"github.com/njayp/chimera/pkg/client"
+	"github.com/njayp/chimera/client"
 )
 
 func TestProxy_EmptyServer(t *testing.T) {
