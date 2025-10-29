@@ -28,12 +28,10 @@ func Handler(clients Clients) *mcp.StreamableHTTPHandler {
 // each newProxy creates a new MCP server instance that aggregates
 // all configured backend servers.
 func (m *manager) newProxy(ctx context.Context) *mcp.Server {
-	impl := &mcp.Implementation{
-		Name: "chimera",
-	}
-
 	proxy := &proxy{
-		server: mcp.NewServer(impl, nil),
+		server: mcp.NewServer(&mcp.Implementation{
+			Name: "chimera",
+		}, nil),
 	}
 
 	for n, c := range m.clients {

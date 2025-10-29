@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"os"
 	"os/exec"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -18,8 +19,7 @@ type Stdio struct {
 func (c Stdio) Connect(ctx context.Context) (*mcp.ClientSession, error) {
 	cmd := exec.CommandContext(ctx, c.Command, c.Args...)
 	// Append any server-specific environment variables
-	cmd.Env = append(cmd.Env, c.Env...)
-
+	cmd.Env = append(os.Environ(), c.Env...)
 	transport := &mcp.CommandTransport{Command: cmd}
 	client := mcp.NewClient(&mcp.Implementation{
 		Name: "chimera",

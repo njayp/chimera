@@ -28,6 +28,14 @@ func (p *proxy) proxyServer(ctx context.Context, client Client, name string) {
 		return
 	}
 
+	// Ensure session is closed when context is cancelled or when we're done
+	go func() {
+		<-ctx.Done()
+		if err := session.Close(); err != nil {
+			slog.Error("failed to close session", "name", name, "err", err)
+		}
+	}()
+
 	// Fetch and register all tools from this server
 	if err := p.proxyTools(ctx, session, name); err != nil {
 		slog.Error("failed to sync tools", "name", name, "err", err)
