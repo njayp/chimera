@@ -7,6 +7,7 @@ import (
 	"log/slog"
 	"os"
 
+	"github.com/njayp/chimera/pkg/client"
 	"github.com/njayp/chimera/pkg/proxy"
 )
 
@@ -42,7 +43,7 @@ func VSCode(path string) (proxy.Clients, error) {
 	for name, server := range config.Servers {
 		switch server.Type {
 		case "stdio":
-			s := proxy.StdioClient{
+			s := client.Stdio{
 				Command: server.Command,
 				Args:    server.Args,
 			}
@@ -53,7 +54,7 @@ func VSCode(path string) (proxy.Clients, error) {
 
 			clients[name] = s
 		case "http":
-			s := proxy.HTTPClient{
+			s := client.HTTP{
 				URL:     server.URL,
 				Headers: server.Headers,
 			}

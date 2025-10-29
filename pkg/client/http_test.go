@@ -1,4 +1,4 @@
-package proxy
+package client
 
 import (
 	"context"
@@ -19,14 +19,14 @@ func TestHTTPClient_Connect(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	client := HTTPClient{
+	client := HTTP{
 		URL: server.URL,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	session, err := client.connect(ctx)
+	session, err := client.Connect(ctx)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}
@@ -37,7 +37,7 @@ func TestHTTPClient_Connect(t *testing.T) {
 }
 
 func TestHTTPClient_HTTPClientWithHeaders(t *testing.T) {
-	client := HTTPClient{
+	client := HTTP{
 		URL: "http://example.com",
 		Headers: map[string]string{
 			"Authorization": "Bearer test-token",

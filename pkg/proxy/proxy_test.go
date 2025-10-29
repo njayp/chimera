@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/njayp/chimera/pkg/client"
 )
 
 func TestProxy_EmptyServer(t *testing.T) {
@@ -19,12 +20,12 @@ func TestProxy_EmptyServer(t *testing.T) {
 	testServer := httptest.NewServer(handler)
 	defer testServer.Close()
 
-	client := HTTPClient{URL: testServer.URL}
+	client := client.HTTP{URL: testServer.URL}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	session, err := client.connect(ctx)
+	session, err := client.Connect(ctx)
 	if err != nil {
 		t.Fatalf("failed to connect: %v", err)
 	}

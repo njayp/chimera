@@ -8,8 +8,9 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-type client interface {
-	connect(ctx context.Context) (*mcp.ClientSession, error)
+// Client represents a generic MCP client that can establish a connection.
+type Client interface {
+	Connect(ctx context.Context) (*mcp.ClientSession, error)
 }
 
 type proxy struct {
@@ -18,9 +19,9 @@ type proxy struct {
 
 // proxyServer establishes a connection to a backend MCP server
 // and syncs its capabilities (tools, resources, prompts).
-func (s *proxy) proxyServer(ctx context.Context, client client, name string) {
+func (s *proxy) proxyServer(ctx context.Context, client Client, name string) {
 	// Establish connection to the server
-	session, err := client.connect(ctx)
+	session, err := client.Connect(ctx)
 	if err != nil {
 		slog.Error("failed to connect to server", "name", name, "err", err)
 		// if connection fails, skip this server

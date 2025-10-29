@@ -1,4 +1,4 @@
-package proxy
+package client
 
 import (
 	"context"
@@ -7,13 +7,14 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// HTTPClient represents the configuration for an HTTP MCP server.
-type HTTPClient struct {
+// HTTP represents the configuration for an HTTP MCP server.
+type HTTP struct {
 	URL     string
 	Headers map[string]string
 }
 
-func (c HTTPClient) connect(ctx context.Context) (*mcp.ClientSession, error) {
+// Connect establishes a connection to the HTTP MCP server.
+func (c HTTP) Connect(ctx context.Context) (*mcp.ClientSession, error) {
 	client := mcp.NewClient(&mcp.Implementation{
 		Name: "chimera",
 	}, nil)
@@ -26,7 +27,7 @@ func (c HTTPClient) connect(ctx context.Context) (*mcp.ClientSession, error) {
 	return client.Connect(ctx, transport, nil)
 }
 
-func (c HTTPClient) httpClient() *http.Client {
+func (c HTTP) httpClient() *http.Client {
 	return &http.Client{
 		Transport: &CustomTransport{
 			Transport: http.DefaultTransport,

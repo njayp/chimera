@@ -1,4 +1,4 @@
-package proxy
+package client
 
 import (
 	"context"
@@ -7,14 +7,15 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// StdioClient represents the configuration for a stdio MCP server.
-type StdioClient struct {
+// Stdio represents the configuration for a stdio MCP server.
+type Stdio struct {
 	Command string
 	Args    []string
 	Env     []string
 }
 
-func (c StdioClient) connect(ctx context.Context) (*mcp.ClientSession, error) {
+// Connect establishes a connection to the stdio MCP server.
+func (c Stdio) Connect(ctx context.Context) (*mcp.ClientSession, error) {
 	cmd := exec.CommandContext(ctx, c.Command, c.Args...)
 	// Append any server-specific environment variables
 	cmd.Env = append(cmd.Env, c.Env...)

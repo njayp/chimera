@@ -1,4 +1,4 @@
-package proxy
+package client
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 )
 
 func TestStdioClient_Connect_InvalidCommand(t *testing.T) {
-	client := StdioClient{
+	client := Stdio{
 		Command: "nonexistent-command-12345",
 		Args:    []string{},
 	}
@@ -15,7 +15,7 @@ func TestStdioClient_Connect_InvalidCommand(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	_, err := client.connect(ctx)
+	_, err := client.Connect(ctx)
 	if err == nil {
 		t.Fatal("expected error for invalid command, got nil")
 	}

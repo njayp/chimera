@@ -9,7 +9,7 @@ import (
 )
 
 // Clients is a map of named MCP clients.
-type Clients map[string]client
+type Clients map[string]Client
 
 // manager wraps multiple MCP servers and exposes them as one.
 type manager struct {
@@ -34,7 +34,7 @@ func Run(clients Clients, addr string) error {
 // all configured backend servers.
 func (s *manager) newProxy(ctx context.Context) *mcp.Server {
 	impl := &mcp.Implementation{
-		Name: "aggregate-proxy",
+		Name: "chimera",
 	}
 
 	proxy := &proxy{

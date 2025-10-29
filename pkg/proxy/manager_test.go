@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/njayp/chimera/pkg/client"
 )
 
 func TestManager_NewProxy_MultipleServers(t *testing.T) {
@@ -31,8 +32,8 @@ func TestManager_NewProxy_MultipleServers(t *testing.T) {
 		clients: make(Clients),
 	}
 
-	m.clients["server1"] = &HTTPClient{URL: testServer1.URL}
-	m.clients["server2"] = &HTTPClient{URL: testServer2.URL}
+	m.clients["server1"] = &client.HTTP{URL: testServer1.URL}
+	m.clients["server2"] = &client.HTTP{URL: testServer2.URL}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
