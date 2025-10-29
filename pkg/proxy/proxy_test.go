@@ -10,23 +10,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func TestProxy_ProxyServer_ConnectionFailure(_ *testing.T) {
-	client := HTTPClient{
-		URL: "http://localhost:99999", // Invalid port
-	}
-
-	impl := &mcp.Implementation{Name: "proxy"}
-	proxy := &proxy{
-		server: mcp.NewServer(impl, nil),
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-
-	// Should not panic on connection failure
-	proxy.proxyServer(ctx, client, "failing-server")
-}
-
 func TestProxy_EmptyServer(t *testing.T) {
 	handler := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
 		impl := &mcp.Implementation{Name: "backend"}

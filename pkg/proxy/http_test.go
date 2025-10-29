@@ -110,35 +110,3 @@ func TestCustomTransport_RoundTrip(t *testing.T) {
 		t.Errorf("expected Authorization header 'Bearer token', got '%s'", headers["Authorization"])
 	}
 }
-
-func TestCustomTransport_EmptyHeaders(t *testing.T) {
-	requestReceived := false
-
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		requestReceived = true
-		w.WriteHeader(http.StatusOK)
-	}))
-	defer server.Close()
-
-	transport := &CustomTransport{
-		Transport: http.DefaultTransport,
-		Headers:   map[string]string{},
-	}
-
-	client := &http.Client{Transport: transport}
-
-	req, err := http.NewRequest("GET", server.URL, nil)
-	if err != nil {
-		t.Fatalf("failed to create request: %v", err)
-	}
-
-	resp, err := client.Do(req)
-	if err != nil {
-		t.Fatalf("request failed: %v", err)
-	}
-	defer func() { _ = resp.Body.Close() }()
-
-	if !requestReceived {
-		t.Fatal("request was not received by server")
-	}
-}

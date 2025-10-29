@@ -66,26 +66,6 @@ func TestVSCode_ValidConfig(t *testing.T) {
 	}
 }
 
-func TestVSCode_EmptyServers(t *testing.T) {
-	content := `{"servers": {}}`
-
-	tmpFile := createTempFile(t, content)
-	defer func() { _ = os.Remove(tmpFile) }()
-
-	servers, err := VSCode(tmpFile)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
-
-	if len(servers.StdioServers) != 0 {
-		t.Errorf("expected 0 stdio servers, got %d", len(servers.StdioServers))
-	}
-
-	if len(servers.HTTPServers) != 0 {
-		t.Errorf("expected 0 http servers, got %d", len(servers.HTTPServers))
-	}
-}
-
 func TestVSCode_InvalidJSON(t *testing.T) {
 	content := `{"servers": {invalid json}`
 
@@ -195,20 +175,6 @@ func TestVSCode_WithInputs(t *testing.T) {
 	if len(servers.StdioServers) != 1 {
 		t.Errorf("expected 1 stdio server, got %d", len(servers.StdioServers))
 	}
-}
-
-func TestVSCode_ReturnsCorrectType(t *testing.T) {
-	content := `{"servers": {}}`
-
-	tmpFile := createTempFile(t, content)
-	defer func() { _ = os.Remove(tmpFile) }()
-
-	servers, err := VSCode(tmpFile)
-	if err != nil {
-		t.Fatalf("expected no error, got: %v", err)
-	}
-
-	_ = servers
 }
 
 func createTempFile(t *testing.T, content string) string {

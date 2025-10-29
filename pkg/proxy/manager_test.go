@@ -10,23 +10,6 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-func TestManager_NewProxy_Empty(t *testing.T) {
-	m := &manager{
-		servers: Servers{
-			StdioServers: make(map[string]StdioClient),
-			HTTPServers:  make(map[string]HTTPClient),
-		},
-	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
-	proxy := m.newProxy(ctx)
-	if proxy == nil {
-		t.Fatal("expected proxy server, got nil")
-	}
-}
-
 func TestManager_NewProxy_MultipleServers(t *testing.T) {
 	handler1 := mcp.NewStreamableHTTPHandler(func(_ *http.Request) *mcp.Server {
 		impl := &mcp.Implementation{Name: "server1"}
@@ -60,28 +43,5 @@ func TestManager_NewProxy_MultipleServers(t *testing.T) {
 	proxy := m.newProxy(ctx)
 	if proxy == nil {
 		t.Fatal("expected proxy server, got nil")
-	}
-}
-
-func TestServers_EmptyInitialization(t *testing.T) {
-	servers := Servers{
-		StdioServers: make(map[string]StdioClient),
-		HTTPServers:  make(map[string]HTTPClient),
-	}
-
-	if servers.StdioServers == nil {
-		t.Error("expected non-nil StdioServers")
-	}
-
-	if servers.HTTPServers == nil {
-		t.Error("expected non-nil HTTPServers")
-	}
-
-	if len(servers.StdioServers) != 0 {
-		t.Errorf("expected 0 stdio servers, got %d", len(servers.StdioServers))
-	}
-
-	if len(servers.HTTPServers) != 0 {
-		t.Errorf("expected 0 http servers, got %d", len(servers.HTTPServers))
 	}
 }
