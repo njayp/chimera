@@ -21,18 +21,26 @@ type Config interface {
 // T should not be a pointer.
 type Watcher[T Config] struct {
 	sync.RWMutex
+	path string
 	// clients are stored so they can be reused
 	clients proxy.Clients
 }
 
-// NewVSCodeWatcher creates a new Watcher for VSCode MCP configuration files.
-func NewVSCodeWatcher(ctx context.Context, path string) (*Watcher[vscode.Config], error) {
-	w := &Watcher[vscode.Config]{}
-	w.update(path)
-	return w, w.start(ctx, path)
+// New creates a new Watcher.
+func New[T Config](ctx context.Context, path string) (*Watcher[T], error) {
+	w := &Watcher[T]{
+		path: path,
+	}
+	w.update()
+	return w, w.start(ctx)
 }
 
-func (w *Watcher[T]) start(ctx context.Context, path string) error {
+// NewVSCodeWatcher creates a new Watcher for VSCode MCP configuration files.
+func NewVSCodeWatcher(ctx context.Context, path string) (*Watcher[vscode.Config], error) {
+	return New[vscode.Config](ctx, path)
+}
+
+func (w *Watcher[T]) start(ctx context.Context) error {
 	// Create new watcher
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
@@ -48,13 +56,13 @@ func (w *Watcher[T]) start(ctx context.Context, path string) error {
 					continue
 				}
 				if event.Has(fsnotify.Write) {
-					w.update(path)
+					w.update()
 				}
 				if event.Has(fsnotify.Create) {
-					w.update(path)
+					w.update()
 				}
 				if event.Has(fsnotify.Remove) {
-					w.update(path)
+					w.update()
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
@@ -72,7 +80,7 @@ func (w *Watcher[T]) start(ctx context.Context, path string) error {
 	}()
 
 	// Add file to watch
-	return watcher.Add(path)
+	return watcher.Add(w.path)
 }
 
 // Clients returns the current set of clients.
@@ -82,15 +90,14 @@ func (w *Watcher[T]) Clients() proxy.Clients {
 	return w.clients
 }
 
-func (w *Watcher[T]) update(path string) {
-	config := new(T)
-
-	data, err := os.ReadFile(path)
+func (w *Watcher[T]) update() {
+	data, err := os.ReadFile(w.path)
 	if err != nil {
 		slog.Error("failed to read config file", "error", err)
 		return
 	}
 
+	config := new(T)
 	if err := json.Unmarshal(data, config); err != nil {
 		slog.Error("failed to parse JSON config", "error", err)
 		return
