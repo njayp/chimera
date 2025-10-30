@@ -17,12 +17,12 @@ type Client struct {
 }
 
 // NewClient creates a new stdio Client instance with the specified command, arguments, and environment variables.
-func NewClient(command string, args []string, env []string) Client {
+func NewClient(command string, args []string, env []string) *Client {
 	client := mcp.NewClient(&mcp.Implementation{
 		Name: "chimera",
 	}, nil)
 
-	return Client{
+	return &Client{
 		command: command,
 		args:    args,
 		env:     env,
@@ -31,7 +31,7 @@ func NewClient(command string, args []string, env []string) Client {
 }
 
 // Connect establishes a connection to the stdio MCP server.
-func (c Client) Connect(ctx context.Context) (*mcp.ClientSession, error) {
+func (c *Client) Connect(ctx context.Context) (*mcp.ClientSession, error) {
 	cmd := exec.CommandContext(ctx, c.command, c.args...)
 	// Append any server-specific environment variables
 	cmd.Env = append(os.Environ(), c.env...)
