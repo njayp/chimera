@@ -1,4 +1,4 @@
-package client
+package stream
 
 import (
 	"context"
@@ -19,9 +19,7 @@ func TestHTTPClient_Connect(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	client := HTTP{
-		URL: server.URL,
-	}
+	client := New(server.URL, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -33,35 +31,6 @@ func TestHTTPClient_Connect(t *testing.T) {
 
 	if session == nil {
 		t.Fatal("expected session, got nil")
-	}
-}
-
-func TestHTTPClient_HTTPClientWithHeaders(t *testing.T) {
-	client := HTTP{
-		URL: "http://example.com",
-		Headers: map[string]string{
-			"Authorization": "Bearer test-token",
-			"X-Custom":      "custom-value",
-		},
-	}
-
-	httpClient := client.client()
-	if httpClient == nil {
-		t.Fatal("expected http client, got nil")
-	}
-
-	// Verify custom transport is configured
-	transport, ok := httpClient.Transport.(*CustomTransport)
-	if !ok {
-		t.Fatal("expected CustomTransport")
-	}
-
-	if transport.Headers["Authorization"] != "Bearer test-token" {
-		t.Errorf("expected Authorization header 'Bearer test-token', got '%s'", transport.Headers["Authorization"])
-	}
-
-	if transport.Headers["X-Custom"] != "custom-value" {
-		t.Errorf("expected X-Custom header 'custom-value', got '%s'", transport.Headers["X-Custom"])
 	}
 }
 

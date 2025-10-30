@@ -1,4 +1,4 @@
-package client
+package stream
 
 import (
 	"context"
@@ -7,33 +7,41 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
-// HTTP represents the configuration for an HTTP MCP server.
-type HTTP struct {
-	URL     string
-	Headers map[string]string
+// Client represents the configuration for an Client MCP server.
+type Client struct {
+	url       string
+	headers   map[string]string
+	client    *mcp.Client
+	transport mcp.Transport
 }
 
-// Connect establishes a connection to the HTTP MCP server.
-func (c HTTP) Connect(ctx context.Context) (*mcp.ClientSession, error) {
+// New creates a new Client instance with the specified URL and headers.
+func New(url string, headers map[string]string) *Client {
 	client := mcp.NewClient(&mcp.Implementation{
 		Name: "chimera",
 	}, nil)
 
 	transport := &mcp.StreamableClientTransport{
-		HTTPClient: c.client(),
-		Endpoint:   c.URL,
+		HTTPClient: &http.Client{
+			Transport: &CustomTransport{
+				Transport: http.DefaultTransport,
+				Headers:   headers,
+			},
+		},
+		Endpoint: url,
 	}
 
-	return client.Connect(ctx, transport, nil)
+	return &Client{
+		url:       url,
+		headers:   headers,
+		client:    client,
+		transport: transport,
+	}
 }
 
-func (c HTTP) client() *http.Client {
-	return &http.Client{
-		Transport: &CustomTransport{
-			Transport: http.DefaultTransport,
-			Headers:   c.Headers,
-		},
-	}
+// Connect establishes a connection to the HTTP MCP server.
+func (c *Client) Connect(ctx context.Context) (*mcp.ClientSession, error) {
+	return c.client.Connect(ctx, c.transport, nil)
 }
 
 // CustomTransport wraps an HTTP transport to add custom headers to all requests.

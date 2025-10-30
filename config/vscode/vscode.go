@@ -6,7 +6,8 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/njayp/chimera/client"
+	"github.com/njayp/chimera/clients/stdio"
+	"github.com/njayp/chimera/clients/stream"
 	"github.com/njayp/chimera/proxy"
 )
 
@@ -55,22 +56,14 @@ func clients(config Config) proxy.Clients {
 	for name, server := range config.Servers {
 		switch server.Type {
 		case "stdio":
-			s := client.Stdio{
-				Command: server.Command,
-				Args:    server.Args,
-			}
-
+			env := make([]string, 0, len(server.Env))
 			for key, value := range server.Env {
-				s.Env = append(s.Env, fmt.Sprintf("%s=%s", key, value))
+				env = append(env, fmt.Sprintf("%s=%s", key, value))
 			}
-
+			s := stdio.New(server.Command, server.Args, env)
 			clients[name] = s
 		case "http":
-			s := client.HTTP{
-				URL:     server.URL,
-				Headers: server.Headers,
-			}
-
+			s := stream.New(server.URL, server.Headers)
 			clients[name] = s
 		default:
 			slog.Error("unsupported server type", "name", name, "type", server.Type)

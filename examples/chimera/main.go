@@ -7,7 +7,7 @@ import (
 	"log"
 	"net/http"
 
-	"github.com/njayp/chimera/client/vscode"
+	"github.com/njayp/chimera/config/vscode"
 	"github.com/njayp/chimera/proxy"
 )
 
