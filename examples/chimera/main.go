@@ -20,6 +20,7 @@ func main() {
 
 func run() error {
 	path := flag.String("config", ".vscode/mcp.json", "path to configuration file")
+	port := flag.String("port", "8080", "HTTP server port")
 	flag.Parse()
 
 	ctx := context.Background()
@@ -28,10 +29,9 @@ func run() error {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	handler := proxy.Handler(watcher.Clients)
-
 	// Start HTTP server
-	addr := ":8080"
-	log.Printf("Starting aggregating MCP HTTP server on %s", addr)
+	addr := ":" + *port
+	log.Printf("Starting reverse-proxy MCP HTTP server on address %q", addr)
+	handler := proxy.Handler(watcher.Clients)
 	return http.ListenAndServe(addr, handler)
 }
