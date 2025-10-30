@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/fsnotify/fsnotify"
+	"github.com/njayp/chimera/config/vscode"
 	"github.com/njayp/chimera/proxy"
 )
 
@@ -17,11 +18,11 @@ type Config interface {
 
 type Watcher[T Config] struct {
 	sync.RWMutex
-	config T
+	config *T
 }
 
-func NewWatcher[T Config](ctx context.Context, path string) (*Watcher[T], error) {
-	w := &Watcher[T]{}
+func NewVSCodeWatcher(ctx context.Context, path string) (*Watcher[vscode.Config], error) {
+	w := &Watcher[vscode.Config]{}
 	w.updateClients(path)
 	return w, w.start(ctx, path)
 }
@@ -73,16 +74,15 @@ func (w *Watcher[T]) start(ctx context.Context, path string) error {
 func (w *Watcher[T]) Clients() proxy.Clients {
 	w.RLock()
 	defer w.RUnlock()
-	return w.config.Clients()
+	return (*w.config).Clients()
 }
 
 func (w *Watcher[T]) updateClients(path string) {
 	w.Lock()
 	defer w.Unlock()
 
-	// we know config has changed, so create a new one
-	var config T
-	w.config = config
+	// We know the config has changed, so make a new one
+	w.config = new(T)
 
 	data, err := os.ReadFile(path)
 	if err != nil {

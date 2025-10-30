@@ -9,7 +9,6 @@ import (
 	"net/http"
 
 	"github.com/njayp/chimera/config"
-	"github.com/njayp/chimera/config/vscode"
 	"github.com/njayp/chimera/proxy"
 )
 
@@ -24,7 +23,7 @@ func run() error {
 	flag.Parse()
 
 	ctx := context.Background()
-	watcher, err := config.NewWatcher[*vscode.Config](ctx, *path)
+	watcher, err := config.NewVSCodeWatcher(ctx, *path)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
