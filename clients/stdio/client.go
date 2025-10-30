@@ -13,14 +13,20 @@ type Client struct {
 	command string
 	args    []string
 	env     []string
+	client  *mcp.Client
 }
 
 // NewClient creates a new stdio Client instance with the specified command, arguments, and environment variables.
 func NewClient(command string, args []string, env []string) Client {
+	client := mcp.NewClient(&mcp.Implementation{
+		Name: "chimera",
+	}, nil)
+
 	return Client{
 		command: command,
 		args:    args,
 		env:     env,
+		client:  client,
 	}
 }
 
@@ -30,9 +36,6 @@ func (c Client) Connect(ctx context.Context) (*mcp.ClientSession, error) {
 	// Append any server-specific environment variables
 	cmd.Env = append(os.Environ(), c.env...)
 	transport := &mcp.CommandTransport{Command: cmd}
-	client := mcp.NewClient(&mcp.Implementation{
-		Name: "chimera",
-	}, nil)
 
-	return client.Connect(ctx, transport, nil)
+	return c.client.Connect(ctx, transport, nil)
 }
