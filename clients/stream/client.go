@@ -10,7 +10,6 @@ import (
 // Client manages an HTTP-based MCP server connection.
 type Client struct {
 	url        string
-	headers    map[string]string
 	mcpClient  *mcp.Client
 	httpClient *http.Client
 }
@@ -31,7 +30,6 @@ func NewClient(url string, headers map[string]string) *Client {
 
 	return &Client{
 		url:        url,
-		headers:    headers,
 		mcpClient:  mcpClient,
 		httpClient: httpClient,
 	}

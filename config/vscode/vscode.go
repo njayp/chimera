@@ -24,6 +24,7 @@ type Server struct {
 	Headers map[string]string `json:"headers,omitempty"`
 }
 
+// Clients converts the VSCode config format into proxy.Clients.
 func (c Config) Clients() proxy.Clients {
 	clients := make(proxy.Clients)
 	for name, server := range c.Servers {

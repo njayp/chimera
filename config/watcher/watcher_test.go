@@ -13,7 +13,7 @@ func TestVSCodeWatcher(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer os.Remove(tmpfile.Name())
+	defer func() { _ = os.Remove(tmpfile.Name()) }()
 
 	watcher, err := NewVSCodeWatcher(ctx, tmpfile.Name())
 	if err != nil {

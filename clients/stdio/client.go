@@ -2,7 +2,6 @@ package stdio
 
 import (
 	"context"
-	"os"
 	"os/exec"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -34,9 +33,7 @@ func NewClient(command string, args []string, env []string) *Client {
 // Connect spawns the stdio process and establishes an MCP session.
 func (c *Client) Connect(ctx context.Context) (*mcp.ClientSession, error) {
 	cmd := exec.CommandContext(ctx, c.command, c.args...)
-	// Append any server-specific environment variables
-	cmd.Env = append(os.Environ(), c.env...)
+	cmd.Env = c.env
 	transport := &mcp.CommandTransport{Command: cmd}
-
 	return c.client.Connect(ctx, transport, nil)
 }

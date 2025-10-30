@@ -21,7 +21,8 @@ type Config interface {
 // T should not be a pointer.
 type Watcher[T Config] struct {
 	sync.RWMutex
-	config *T
+	// clients are stored so they can be reused
+	clients proxy.Clients
 }
 
 // NewVSCodeWatcher creates a new Watcher for VSCode MCP configuration files.
@@ -78,15 +79,11 @@ func (w *Watcher[T]) start(ctx context.Context, path string) error {
 func (w *Watcher[T]) Clients() proxy.Clients {
 	w.RLock()
 	defer w.RUnlock()
-	return (*w.config).Clients()
+	return w.clients
 }
 
 func (w *Watcher[T]) update(path string) {
-	w.Lock()
-	defer w.Unlock()
-
-	// We know the config has changed, so make a new object
-	w.config = new(T)
+	config := new(T)
 
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -94,8 +91,12 @@ func (w *Watcher[T]) update(path string) {
 		return
 	}
 
-	if err := json.Unmarshal(data, w.config); err != nil {
+	if err := json.Unmarshal(data, config); err != nil {
 		slog.Error("failed to parse JSON config", "error", err)
 		return
 	}
+
+	w.Lock()
+	defer w.Unlock()
+	w.clients = (*config).Clients()
 }
