@@ -9,39 +9,42 @@ import (
 
 // Client represents the configuration for an Client MCP server.
 type Client struct {
-	url       string
-	headers   map[string]string
-	client    *mcp.Client
-	transport mcp.Transport
+	url        string
+	headers    map[string]string
+	mcpClient  *mcp.Client
+	httpClient *http.Client
 }
 
-// New creates a new Client instance with the specified URL and headers.
-func New(url string, headers map[string]string) *Client {
-	client := mcp.NewClient(&mcp.Implementation{
+// NewClient creates a new Client instance with the specified URL and headers.
+func NewClient(url string, headers map[string]string) *Client {
+	mcpClient := mcp.NewClient(&mcp.Implementation{
 		Name: "chimera",
 	}, nil)
 
-	transport := &mcp.StreamableClientTransport{
-		HTTPClient: &http.Client{
-			Transport: &CustomTransport{
-				Transport: http.DefaultTransport,
-				Headers:   headers,
-			},
+	httpClient := &http.Client{
+		Transport: &CustomTransport{
+			Transport: http.DefaultTransport,
+			Headers:   headers,
 		},
-		Endpoint: url,
 	}
 
 	return &Client{
-		url:       url,
-		headers:   headers,
-		client:    client,
-		transport: transport,
+		url:        url,
+		headers:    headers,
+		mcpClient:  mcpClient,
+		httpClient: httpClient,
 	}
 }
 
 // Connect establishes a connection to the HTTP MCP server.
 func (c *Client) Connect(ctx context.Context) (*mcp.ClientSession, error) {
-	return c.client.Connect(ctx, c.transport, nil)
+	// A new transport must be created for each session
+	transport := &mcp.StreamableClientTransport{
+		Endpoint:   c.url,
+		HTTPClient: c.httpClient,
+	}
+
+	return c.mcpClient.Connect(ctx, transport, nil)
 }
 
 // CustomTransport wraps an HTTP transport to add custom headers to all requests.

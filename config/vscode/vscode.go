@@ -60,10 +60,10 @@ func clients(config Config) proxy.Clients {
 			for key, value := range server.Env {
 				env = append(env, fmt.Sprintf("%s=%s", key, value))
 			}
-			s := stdio.New(server.Command, server.Args, env)
+			s := stdio.NewClient(server.Command, server.Args, env)
 			clients[name] = s
 		case "http":
-			s := stream.New(server.URL, server.Headers)
+			s := stream.NewClient(server.URL, server.Headers)
 			clients[name] = s
 		default:
 			slog.Error("unsupported server type", "name", name, "type", server.Type)

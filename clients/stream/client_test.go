@@ -19,7 +19,7 @@ func TestHTTPClient_Connect(t *testing.T) {
 	server := httptest.NewServer(handler)
 	defer server.Close()
 
-	client := New(server.URL, nil)
+	client := NewClient(server.URL, nil)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

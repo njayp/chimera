@@ -15,7 +15,8 @@ type Client struct {
 	env     []string
 }
 
-func New(command string, args []string, env []string) Client {
+// NewClient creates a new stdio Client instance with the specified command, arguments, and environment variables.
+func NewClient(command string, args []string, env []string) Client {
 	return Client{
 		command: command,
 		args:    args,
