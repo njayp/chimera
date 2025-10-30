@@ -5,6 +5,7 @@ metadata:
   labels:
     {{- include "chimera.labels" . | nindent 4 }}
 spec:
+  replicas: {{ .Values.replicaCount }}
   selector:
     matchLabels:
       {{- include "chimera.selectorLabels" . | nindent 6 }}
