@@ -1,0 +1,15 @@
+replicaCount: 1
+
+image:
+  repository: chimera
+  pullPolicy: IfNotPresent
+  tag: ""
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources: {}
+
+config:
+  servers: {}

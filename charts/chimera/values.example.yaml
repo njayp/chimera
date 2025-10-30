@@ -1,0 +1,31 @@
+# Example values file showing how to configure MCP servers
+
+replicaCount: 1
+
+image:
+  repository: chimera
+  pullPolicy: IfNotPresent
+  tag: "0.1.0"
+
+service:
+  type: ClusterIP
+  port: 8080
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+config:
+  servers:
+    filesystem:
+      type: stdio
+      command: /usr/local/bin/mcp-filesystem
+      args:
+        - start
+    api-server:
+      type: http
+      url: http://api-server:8080/mcp

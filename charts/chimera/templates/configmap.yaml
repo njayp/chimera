@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "chimera.fullname" . }}
+  labels:
+    {{- include "chimera.labels" . | nindent 4 }}
+data:
+  config.json: |-
+    {{- toPrettyJson .Values.config | nindent 4 }}

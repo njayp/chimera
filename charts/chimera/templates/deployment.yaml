@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "chimera.fullname" . }}
+  labels:
+    {{- include "chimera.labels" . | nindent 4 }}
+spec:
+  selector:
+    matchLabels:
+      {{- include "chimera.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "chimera.selectorLabels" . | nindent 8 }}
+    spec:
+      containers:
+        - name: chimera
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - "-config"
+            - "/etc/chimera/config.json"
+            - "-port"
+            - "{{ .Values.service.port }}"
+          ports:
+            - name: http
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          volumeMounts:
+            - name: config
+              mountPath: /etc/chimera
+              readOnly: true
+          {{- with .Values.resources }}
+          resources:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+      volumes:
+        - name: config
+          configMap:
+            name: {{ include "chimera.fullname" . }}

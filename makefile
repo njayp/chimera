@@ -10,6 +10,7 @@ up:
 lint: 
 	golangci-lint fmt ./...
 	golangci-lint run ./...
+	helm lint charts/chimera
 
 .PHONY: test
 test:
