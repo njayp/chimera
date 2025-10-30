@@ -1,4 +1,4 @@
-package config
+package watcher
 
 import (
 	"context"
@@ -12,18 +12,22 @@ import (
 	"github.com/njayp/chimera/proxy"
 )
 
+// Config represents the file structure, and it must be able to produce Clients.
 type Config interface {
 	Clients() proxy.Clients
 }
 
+// Watcher watches a configuration file for changes and reloads it.
+// T should not be a pointer.
 type Watcher[T Config] struct {
 	sync.RWMutex
 	config *T
 }
 
+// NewVSCodeWatcher creates a new Watcher for VSCode MCP configuration files.
 func NewVSCodeWatcher(ctx context.Context, path string) (*Watcher[vscode.Config], error) {
 	w := &Watcher[vscode.Config]{}
-	w.updateClients(path)
+	w.update(path)
 	return w, w.start(ctx, path)
 }
 
@@ -34,7 +38,7 @@ func (w *Watcher[T]) start(ctx context.Context, path string) error {
 		return err
 	}
 
-	// Start listening for events
+	// Listen for events
 	go func() {
 		for {
 			select {
@@ -43,13 +47,13 @@ func (w *Watcher[T]) start(ctx context.Context, path string) error {
 					continue
 				}
 				if event.Has(fsnotify.Write) {
-					w.updateClients(path)
+					w.update(path)
 				}
 				if event.Has(fsnotify.Create) {
-					w.updateClients(path)
+					w.update(path)
 				}
 				if event.Has(fsnotify.Remove) {
-					w.updateClients(path)
+					w.update(path)
 				}
 			case err, ok := <-watcher.Errors:
 				if !ok {
@@ -77,11 +81,11 @@ func (w *Watcher[T]) Clients() proxy.Clients {
 	return (*w.config).Clients()
 }
 
-func (w *Watcher[T]) updateClients(path string) {
+func (w *Watcher[T]) update(path string) {
 	w.Lock()
 	defer w.Unlock()
 
-	// We know the config has changed, so make a new one
+	// We know the config has changed, so make a new object
 	w.config = new(T)
 
 	data, err := os.ReadFile(path)

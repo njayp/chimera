@@ -1,19 +1,29 @@
-package config
+package watcher
 
 import (
-	"context"
 	"os"
 	"testing"
 	"time"
 )
 
 func TestVSCodeWatcher(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
+
 	tmpfile, err := os.CreateTemp("", "mcpconfig-*.json")
 	if err != nil {
 		t.Fatal(err)
 	}
 	defer os.Remove(tmpfile.Name())
+
+	watcher, err := NewVSCodeWatcher(ctx, tmpfile.Name())
+	if err != nil {
+		t.Fatalf("failed to create watcher: %v", err)
+	}
+
+	clients := watcher.Clients()
+	if len(clients) != 0 {
+		t.Fatalf("expected 0 clients, got %d", len(clients))
+	}
 
 	initialConfig := `{
 		"servers": {
@@ -34,12 +44,10 @@ func TestVSCodeWatcher(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	watcher, err := NewVSCodeWatcher(ctx, tmpfile.Name())
-	if err != nil {
-		t.Fatalf("failed to create watcher: %v", err)
-	}
+	// Give some time for the watcher to pick up the change
+	time.Sleep(time.Second)
 
-	clients := watcher.Clients()
+	clients = watcher.Clients()
 	if len(clients) != 1 {
 		t.Fatalf("expected 1 client, got %d", len(clients))
 	}
