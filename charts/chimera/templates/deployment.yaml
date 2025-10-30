@@ -18,11 +18,11 @@ spec:
         - name: chimera
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
           imagePullPolicy: {{ .Values.image.pullPolicy }}
-          args:
-            - "-config"
-            - "/etc/chimera/config.json"
-            - "-port"
-            - "{{ .Values.service.port }}"
+          env:
+            - name: PORT
+              value: "{{ .Values.service.port }}"
+            - name: CONFIG_PATH
+              value: "/etc/chimera/config.json"
           ports:
             - name: http
               containerPort: {{ .Values.service.port }}
