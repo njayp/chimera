@@ -14,7 +14,7 @@ import (
 
 // Config represents the file structure, and it must be able to produce Clients.
 type Config interface {
-	Clients() proxy.Clients
+	ToClients() proxy.Clients
 }
 
 // Watcher watches a configuration file for changes and reloads it.
@@ -105,5 +105,5 @@ func (w *Watcher[T]) update() {
 
 	w.Lock()
 	defer w.Unlock()
-	w.clients = (*config).Clients()
+	w.clients = (*config).ToClients()
 }
