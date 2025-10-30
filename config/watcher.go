@@ -17,7 +17,7 @@ type Config interface {
 
 type Watcher[T Config] struct {
 	sync.RWMutex
-	clients proxy.Clients
+	config T
 }
 
 func NewWatcher[T Config](ctx context.Context, path string) (*Watcher[T], error) {
@@ -73,26 +73,25 @@ func (w *Watcher[T]) start(ctx context.Context, path string) error {
 func (w *Watcher[T]) Clients() proxy.Clients {
 	w.RLock()
 	defer w.RUnlock()
-	return w.clients
+	return w.config.Clients()
 }
 
 func (w *Watcher[T]) updateClients(path string) {
 	w.Lock()
 	defer w.Unlock()
 
+	// we know config has changed, so create a new one
+	var config T
+	w.config = config
+
 	data, err := os.ReadFile(path)
 	if err != nil {
 		slog.Error("failed to read config file", "error", err)
-		w.clients = nil
 		return
 	}
 
-	var config T
-	if err := json.Unmarshal(data, config); err != nil {
+	if err := json.Unmarshal(data, w.config); err != nil {
 		slog.Error("failed to parse JSON config", "error", err)
-		w.clients = nil
 		return
 	}
-
-	w.clients = config.Clients()
 }
