@@ -1,2 +1,2 @@
-// Package vscode provides configuration file loading and parsing.
+// Package vscode loads VSCode MCP configuration files.
 package vscode

@@ -1,3 +1,3 @@
-// Package proxy provides functionality for aggregating multiple MCP servers
-// (both stdio and HTTP) into a single HTTP MCP server.
+// Package proxy aggregates multiple MCP servers into one HTTP endpoint.
+// Automatically prefixes tool/resource/prompt names to prevent conflicts.
 package proxy

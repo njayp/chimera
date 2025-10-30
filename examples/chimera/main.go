@@ -2,11 +2,13 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net/http"
 
+	"github.com/njayp/chimera/config"
 	"github.com/njayp/chimera/config/vscode"
 	"github.com/njayp/chimera/proxy"
 )
@@ -21,12 +23,13 @@ func run() error {
 	path := flag.String("config", ".vscode/mcp.json", "path to configuration file")
 	flag.Parse()
 
-	clients, err := vscode.Clients(*path)
+	ctx := context.Background()
+	watcher, err := config.NewWatcher[*vscode.Config](ctx, *path)
 	if err != nil {
 		return fmt.Errorf("failed to load config: %w", err)
 	}
 
-	handler := proxy.Handler(clients)
+	handler := proxy.Handler(watcher.Clients)
 
 	// Start HTTP server
 	addr := ":8080"

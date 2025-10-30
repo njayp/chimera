@@ -1,2 +1,2 @@
-// Package stdio implements a stdio client for mcp servers.
+// Package stdio provides a client for stdio-based MCP servers.
 package stdio

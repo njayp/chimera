@@ -74,7 +74,7 @@ func createTestServer(name string) *mcp.Server {
 func connectProxyClient(ctx context.Context, t *testing.T, clients Clients) *mcp.ClientSession {
 	t.Helper()
 
-	m := &manager{clients: clients}
+	m := &manager{clientsFunc: func() Clients { return clients }}
 	proxyServer := m.newProxy(ctx)
 
 	serverTransport, clientTransport := mcp.NewInMemoryTransports()
