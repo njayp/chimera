@@ -33,12 +33,12 @@ func run() error {
 	ctx := context.Background()
 	watcher, err := watcher.NewVSCodeWatcher(ctx, path)
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		return fmt.Errorf("failed to create file watcher: %w", err)
 	}
 
 	// Start HTTP server
 	addr := ":" + port
 	log.Printf("Starting reverse-proxy MCP HTTP server on address %q", addr)
-	handler := proxy.Handler(watcher.Clients)
+	handler := proxy.Handler(watcher)
 	return http.ListenAndServe(addr, handler)
 }

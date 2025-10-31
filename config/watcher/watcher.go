@@ -31,7 +31,8 @@ func New[T Config](ctx context.Context, path string) (*Watcher[T], error) {
 	w := &Watcher[T]{
 		path: path,
 	}
-	w.update()
+	// update after starting to avoid race
+	defer w.update()
 	return w, w.start(ctx)
 }
 
@@ -59,9 +60,6 @@ func (w *Watcher[T]) start(ctx context.Context) error {
 					w.update()
 				}
 				if event.Has(fsnotify.Create) {
-					w.update()
-				}
-				if event.Has(fsnotify.Remove) {
 					w.update()
 				}
 			case err, ok := <-watcher.Errors:
