@@ -71,9 +71,17 @@ func (p *proxy) proxyServer(ctx context.Context, name string, client Client) {
 		}
 	}()
 
-	go p.proxyTools(ctx, name, session, tools)
-	go p.proxyPrompts(ctx, name, session, prompts)
-	go p.proxyResources(ctx, name, session, resources)
+	wg := sync.WaitGroup{}
+	wg.Go(func() {
+		p.proxyTools(ctx, name, session, tools)
+	})
+	wg.Go(func() {
+		p.proxyPrompts(ctx, name, session, prompts)
+	})
+	wg.Go(func() {
+		p.proxyResources(ctx, name, session, resources)
+	})
+	wg.Wait()
 }
 
 func (p *proxy) proxyTools(ctx context.Context, name string, session *mcp.ClientSession, cache *cache) {
