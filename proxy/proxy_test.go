@@ -12,21 +12,15 @@ type testClient struct {
 	server *mcp.Server
 }
 
-func (c *testClient) Connect(ctx context.Context) (*mcp.ClientSession, error) {
+func (c *testClient) Transport(ctx context.Context) mcp.Transport {
 	serverTransport, clientTransport := mcp.NewInMemoryTransports()
 
-	client := mcp.NewClient(&mcp.Implementation{Name: "test-client", Version: "0.1.0"}, nil)
-
-	if _, err := c.server.Connect(ctx, serverTransport, nil); err != nil {
-		return nil, fmt.Errorf("failed to connect server: %w", err)
-	}
-
-	session, err := client.Connect(ctx, clientTransport, nil)
+	_, err := c.server.Connect(ctx, serverTransport, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect client: %w", err)
+		panic(err)
 	}
 
-	return session, nil
+	return clientTransport
 }
 
 func createTestServer(name string) *mcp.Server {

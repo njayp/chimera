@@ -24,7 +24,10 @@ func TestHTTPClient_Connect(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	session, err := client.Connect(ctx)
+	c := mcp.NewClient(&mcp.Implementation{
+		Name: "test-client",
+	}, nil)
+	session, err := c.Connect(ctx, client.Transport(ctx), nil)
 	if err != nil {
 		t.Fatalf("expected no error, got: %v", err)
 	}

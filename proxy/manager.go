@@ -27,6 +27,7 @@ func Handler(provider Provider) *mcp.StreamableHTTPHandler {
 	m := &manager{provider: provider}
 
 	// Create HTTP handler that creates a new aggregating server per session
+	// This allows different tools to be available for different sessions
 	return mcp.NewStreamableHTTPHandler(func(req *http.Request) *mcp.Server {
 		return m.newProxy(req.Context())
 	}, nil)
@@ -35,20 +36,22 @@ func Handler(provider Provider) *mcp.StreamableHTTPHandler {
 // each newProxy creates a new MCP server instance that aggregates
 // all configured backend servers.
 func (m *manager) newProxy(ctx context.Context) *mcp.Server {
-	proxy := &proxy{
-		server: mcp.NewServer(&mcp.Implementation{
-			Name: "chimera",
-		}, nil),
-	}
+	p := &proxy{}
+	p.server = mcp.NewServer(&mcp.Implementation{
+		Name: "chimera",
+	}, &mcp.ServerOptions{
+		// TODO
+		RootsListChangedHandler: nil,
+	})
 
 	// Connect to all backend servers async
 	wg := sync.WaitGroup{}
 	for n, c := range m.provider.Clients() {
 		wg.Go(func() {
-			proxy.proxyServer(ctx, c, n)
+			p.proxyServer(ctx, n, c)
 		})
 	}
 	wg.Wait()
 
-	return proxy.server
+	return p.server
 }

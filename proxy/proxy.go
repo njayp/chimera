@@ -3,23 +3,61 @@ package proxy
 import (
 	"context"
 	"log/slog"
-	"strings"
+	"sync"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 )
 
 // Client connects to an MCP server and returns a session.
 type Client interface {
-	Connect(ctx context.Context) (*mcp.ClientSession, error)
+	Transport(ctx context.Context) mcp.Transport
 }
 
 type proxy struct {
 	server *mcp.Server
 }
 
+type cache struct {
+	sync.Mutex
+	names map[string]bool
+}
+
 // proxyServer connects to a backend and registers its tools, resources, and prompts.
-func (p *proxy) proxyServer(ctx context.Context, client Client, name string) {
-	session, err := client.Connect(ctx)
+func (p *proxy) proxyServer(ctx context.Context, name string, client Client) {
+	transport := client.Transport(ctx)
+	if transport == nil {
+		slog.Error("no transport available for client", "name", name)
+		return
+	}
+
+	tools := &cache{
+		names: make(map[string]bool),
+	}
+	prompts := &cache{
+		names: make(map[string]bool),
+	}
+	resources := &cache{
+		names: make(map[string]bool),
+	}
+
+	c := mcp.NewClient(&mcp.Implementation{
+		Name: "chimera",
+	}, &mcp.ClientOptions{
+		ToolListChangedHandler: func(ctx context.Context, req *mcp.ToolListChangedRequest) {
+			p.proxyTools(ctx, name, req.Session, tools)
+		},
+		PromptListChangedHandler: func(ctx context.Context, req *mcp.PromptListChangedRequest) {
+			p.proxyPrompts(ctx, name, req.Session, prompts)
+		},
+		ResourceListChangedHandler: func(ctx context.Context, req *mcp.ResourceListChangedRequest) {
+			p.proxyResources(ctx, name, req.Session, resources)
+		},
+
+		// TODO
+		ResourceUpdatedHandler: nil,
+	})
+
+	session, err := c.Connect(ctx, transport, nil)
 	if err != nil {
 		slog.Error("failed to connect to server", "name", name, "err", err)
 		return
@@ -33,35 +71,44 @@ func (p *proxy) proxyServer(ctx context.Context, client Client, name string) {
 		}
 	}()
 
-	if err := p.proxyTools(ctx, session, name); err != nil {
-		slog.Error("failed to sync tools", "name", name, "err", err)
-	}
-
-	if err := p.proxyResources(ctx, session, name); err != nil {
-		slog.Error("failed to sync resources", "name", name, "err", err)
-	}
-
-	if err := p.proxyPrompts(ctx, session, name); err != nil {
-		slog.Error("failed to sync prompts", "name", name, "err", err)
-	}
+	go p.proxyTools(ctx, name, session, tools)
+	go p.proxyPrompts(ctx, name, session, prompts)
+	go p.proxyResources(ctx, name, session, resources)
 }
 
-func (p *proxy) proxyTools(ctx context.Context, session *mcp.ClientSession, name string) error {
+func (p *proxy) proxyTools(ctx context.Context, name string, session *mcp.ClientSession, cache *cache) {
+	// Gather prompts
+	var tools []*mcp.Tool
 	for tool, err := range session.Tools(ctx, nil) {
 		if err != nil {
-			return err
+			// Connection failure
+			slog.Error("failed to list prompts", "name", name, "err", err)
+			return
 		}
 
-		// Prefix with server name unless already prefixed
-		prefixedTool := *tool
-		if !strings.HasPrefix(tool.Name, name) {
-			prefixedTool.Name = name + "." + tool.Name
-		}
+		tools = append(tools, tool)
+	}
 
-		// Register tool that forwards calls to the backend
-		p.server.AddTool(&prefixedTool, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	cache.Lock()
+	defer cache.Unlock()
+
+	// Register tools
+	for _, tool := range tools {
+		// Prefix name for uniqueness, but save name for callback
+		oldName := tool.Name
+		tool.Name = name + "." + tool.Name
+
+		if _, ok := cache.names[tool.Name]; ok {
+			// Already registered
+			cache.names[tool.Name] = true
+			continue
+		}
+		// mark as registered
+		cache.names[tool.Name] = true
+
+		p.server.AddTool(tool, func(ctx context.Context, req *mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 			params := &mcp.CallToolParams{
-				Name:      tool.Name,
+				Name:      oldName,
 				Arguments: req.Params.Arguments,
 			}
 
@@ -69,20 +116,30 @@ func (p *proxy) proxyTools(ctx context.Context, session *mcp.ClientSession, name
 		})
 	}
 
-	return nil
+	// Unregister prompts that are no longer present
+	var rm []string
+	for name, registered := range cache.names {
+		if !registered {
+			rm = append(rm, name)
+			delete(cache.names, name)
+		} else {
+			// reset for next iteration
+			cache.names[name] = false
+		}
+	}
+	p.server.RemovePrompts(rm...)
 }
 
-func (p *proxy) proxyResources(ctx context.Context, session *mcp.ClientSession, name string) error {
+func (p *proxy) proxyResources(ctx context.Context, name string, session *mcp.ClientSession, cache *cache) {
 	for resource, err := range session.Resources(ctx, nil) {
 		if err != nil {
-			return err
+			slog.Error("failed to list resources", "name", name, "err", err)
+			return
 		}
 
 		// Prefix URI unless already prefixed
 		prefixedResource := *resource
-		if !strings.HasPrefix(resource.URI, name) {
-			prefixedResource.URI = name + "." + resource.URI
-		}
+		prefixedResource.URI = name + "." + resource.URI
 
 		p.server.AddResource(&prefixedResource, func(ctx context.Context, _ *mcp.ReadResourceRequest) (*mcp.ReadResourceResult, error) {
 			params := &mcp.ReadResourceParams{
@@ -92,25 +149,41 @@ func (p *proxy) proxyResources(ctx context.Context, session *mcp.ClientSession, 
 			return session.ReadResource(ctx, params)
 		})
 	}
-
-	return nil
 }
 
-func (p *proxy) proxyPrompts(ctx context.Context, session *mcp.ClientSession, name string) error {
+func (p *proxy) proxyPrompts(ctx context.Context, name string, session *mcp.ClientSession, cache *cache) {
+	// Gather prompts
+	var prompts []*mcp.Prompt
 	for prompt, err := range session.Prompts(ctx, nil) {
 		if err != nil {
-			// iteration stops at first error
-			return err
+			// Connection failure
+			slog.Error("failed to list prompts", "name", name, "err", err)
+			return
 		}
 
-		prefixedPrompt := *prompt
-		if !strings.HasPrefix(prompt.Name, name) {
-			prefixedPrompt.Name = name + "." + prompt.Name
-		}
+		prompts = append(prompts, prompt)
+	}
 
-		p.server.AddPrompt(&prefixedPrompt, func(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
+	cache.Lock()
+	defer cache.Unlock()
+
+	// Register prompts
+	for _, prompt := range prompts {
+		// Prefix name for uniqueness, but save name for callback
+		oldName := prompt.Name
+		prompt.Name = name + "." + prompt.Name
+
+		if _, ok := cache.names[prompt.Name]; ok {
+			// Already registered
+			cache.names[prompt.Name] = true
+			continue
+		}
+		// mark as registered
+		cache.names[prompt.Name] = true
+
+		p.server.AddPrompt(prompt, func(ctx context.Context, req *mcp.GetPromptRequest) (*mcp.GetPromptResult, error) {
 			params := &mcp.GetPromptParams{
-				Name:      prompt.Name,
+				Name:      oldName,
 				Arguments: req.Params.Arguments,
 			}
 
@@ -118,5 +191,16 @@ func (p *proxy) proxyPrompts(ctx context.Context, session *mcp.ClientSession, na
 		})
 	}
 
-	return nil
+	// Unregister prompts that are no longer present
+	var rm []string
+	for name, registered := range cache.names {
+		if !registered {
+			rm = append(rm, name)
+			delete(cache.names, name)
+		} else {
+			// reset for next iteration
+			cache.names[name] = false
+		}
+	}
+	p.server.RemovePrompts(rm...)
 }
